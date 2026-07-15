@@ -50,8 +50,8 @@ except Exception as e:
     st.stop()
 
 st.sidebar.image("https://img.icons8.com/clouds/200/car.png", width=150)
-st.sidebar.title("🎮 لوحة التحكم")
-page = st.sidebar.radio("انتقل إلى:", ["🔮 توقع سعر سيارتك", "📊 داشبورد تحليل السوق"])
+st.sidebar.title("لوحة التحكم")
+page = st.sidebar.radio("انتقل إلى:", [" توقع سعر سيارتك", "تحليل السوق"])
 
 brands = sorted(df['Brand'].dropna().unique())
 regions = sorted(df['Region'].dropna().unique())
@@ -164,7 +164,7 @@ elif page == "📊 داشبورد تحليل السوق":
         st.plotly_chart(fig1, use_container_width=True)
         
     with chart_col2:
-        st.subheader("💰 متوسط الأسعار حسب بلد المنشأ (Origin)")
+        st.subheader("متوسط الأسعار حسب بلد المنشأ (Origin)")
         origin_prices = df.groupby('Origin')['Price'].mean().reset_index().sort_values(by='Price', ascending=False)
         fig2 = px.pie(origin_prices, names='Origin', values='Price', color_discrete_sequence=px.colors.sequential.Blues_r,
                       hole=0.4, labels={'Price': 'متوسط السعر', 'Origin': 'المنشأ'})
