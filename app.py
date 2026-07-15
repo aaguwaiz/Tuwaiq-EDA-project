@@ -50,8 +50,8 @@ except Exception as e:
     st.stop()
 
 st.sidebar.image("https://img.icons8.com/clouds/200/car.png", width=150)
-st.sidebar.title("لوحة التحكم")
-page = st.sidebar.radio("انتقل إلى:", [" توقع سعر سيارتك", "تحليل السوق"])
+st.sidebar.title("🎮 لوحة التحكم")
+page = st.sidebar.radio("انتقل إلى:", ["🔮 توقع سعر سيارتك", "📊 داشبورد تحليل السوق"])
 
 brands = sorted(df['Brand'].dropna().unique())
 regions = sorted(df['Region'].dropna().unique())
@@ -93,15 +93,23 @@ if page == "🔮 توقع سعر سيارتك":
     if st.button("احسب السعر المتوقع 🚀"):
         with st.spinner("جاري حساب السعر..."):
             
-            training_cols = [col for col in df.columns if col != 'Price']
-            input_df = pd.DataFrame(0, index=[0], columns=training_cols)
+            # هنا السحر! نجلب الـ 438 عمود الأصلية مباشرة من داخل الموديل المدرب
+            try:
+                model_features = rf_model.feature_names_in_
+            except AttributeError:
+                st.error("⚠️ الموديل غير متوافق مع جلب الأعمدة تلقائياً. تأكد من حفظه بعد التدريب مباشرة.")
+                st.stop()
+                
+            input_df = pd.DataFrame(0, index=[0], columns=model_features)
             
-            input_df.at[0, 'Year'] = year
-            input_df.at[0, 'Mileage'] = mileage
-            input_df.at[0, 'Engine_Size'] = engine_size
-            input_df.at[0, 'Is_New'] = 1 if is_new else 0
-            input_df.at[0, 'Negotiable'] = 1 if negotiable else 0
+            # تعبئة القيم الرقمية الصريحة
+            if 'Year' in input_df.columns: input_df.at[0, 'Year'] = year
+            if 'Mileage' in input_df.columns: input_df.at[0, 'Mileage'] = mileage
+            if 'Engine_Size' in input_df.columns: input_df.at[0, 'Engine_Size'] = engine_size
+            if 'Is_New' in input_df.columns: input_df.at[0, 'Is_New'] = 1 if is_new else 0
+            if 'Negotiable' in input_df.columns: input_df.at[0, 'Negotiable'] = 1 if negotiable else 0
             
+            # تشفير المدخلات النصية ديناميكياً لتطابق الموديل
             for col_name, val in [('Brand', selected_brand), ('Model', selected_model), 
                                   ('Region', region), ('Origin', origin), 
                                   ('Color', color), ('Trim', trim)]:
@@ -164,7 +172,7 @@ elif page == "📊 داشبورد تحليل السوق":
         st.plotly_chart(fig1, use_container_width=True)
         
     with chart_col2:
-        st.subheader("متوسط الأسعار حسب بلد المنشأ (Origin)")
+        st.subheader("💰 متوسط الأسعار حسب بلد المنشأ (Origin)")
         origin_prices = df.groupby('Origin')['Price'].mean().reset_index().sort_values(by='Price', ascending=False)
         fig2 = px.pie(origin_prices, names='Origin', values='Price', color_discrete_sequence=px.colors.sequential.Blues_r,
                       hole=0.4, labels={'Price': 'متوسط السعر', 'Origin': 'المنشأ'})
