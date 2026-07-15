@@ -39,7 +39,7 @@ def load_assets():
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv('saudi_cars_cleaned.csv')
+    df = pd.read_csv('saudi_cars_cleaned_for_powerbi.csv')
     return df
 
 try:
