@@ -39,7 +39,7 @@ def load_assets():
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv('saudi_cars_cleaned_for_powerbi.csv')
+    df = pd.read_csv('saudi_cars_cleaned.csv')
     return df
 
 try:
@@ -54,17 +54,13 @@ st.sidebar.title("🎮 لوحة التحكم")
 page = st.sidebar.radio("انتقل إلى:", ["🔮 توقع سعر سيارتك", "📊 داشبورد تحليل السوق"])
 
 brands = sorted(df['Brand'].dropna().unique())
-regions = sorted(df['Region'].dropna().unique())
-colors = sorted(df['Color'].dropna().unique())
-origins = sorted(df['Origin'].dropna().unique())
-trims = sorted(df['Trim'].dropna().unique())
 
 if page == "🔮 توقع سعر سيارتك":
     st.title("🔮 توقع سعر السيارة بالذكاء الاصطناعي")
-    st.write("أدخل مواصفات سيارتك بدقة لمعرفة قيمتها العادلة في السوق السعودي حالياً.")
+    st.write("أدخل مواصفات سيارتك الأساسية لمعرفة قيمتها العادلة في السوق السعودي حالياً.")
     st.write("---")
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     
     with col1:
         selected_brand = st.selectbox("الماركة (Brand)", brands)
@@ -75,47 +71,29 @@ if page == "🔮 توقع سعر سيارتك":
     with col2:
         mileage = st.number_input("الممشى بالكيلومتر (Mileage)", min_value=0, max_value=1000000, value=50000, step=5000)
         engine_size = st.number_input("سعة المحرك باللتر (Engine Size)", min_value=0.5, max_value=10.0, value=2.0, step=0.1)
-        region = st.selectbox("المنطقة (Region)", regions)
-
-    with col3:
-        origin = st.selectbox("المنشأ (Origin)", origins)
-        color = st.selectbox("اللون (Color)", colors)
-        trim = st.selectbox("الفئة (Trim)", trims)
-        
-    col_opt1, col_opt2 = st.columns(2)
-    with col_opt1:
-        is_new = st.checkbox("هل السيارة جديدة كلياً؟ (Is New)")
-    with col_opt2:
-        negotiable = st.checkbox("هل السعر قابل للتفاوض؟ (Negotiable)")
 
     st.write("---")
     
     if st.button("احسب السعر المتوقع 🚀"):
         with st.spinner("جاري حساب السعر..."):
             
-            # هنا السحر! نجلب الـ 438 عمود الأصلية مباشرة من داخل الموديل المدرب
             try:
                 model_features = rf_model.feature_names_in_
             except AttributeError:
-                st.error("⚠️ الموديل غير متوافق مع جلب الأعمدة تلقائياً. تأكد من حفظه بعد التدريب مباشرة.")
+                st.error("⚠️ الموديل غير متوافق مع جلب الأعمدة تلقائياً.")
                 st.stop()
                 
-            input_df = pd.DataFrame(0, index=[0], columns=model_features)
+            # إنشاء الـ DataFrame كـ float64 لتلافي خطأ نوع البيانات بالكامل
+            input_df = pd.DataFrame(0.0, index=[0], columns=model_features, dtype=np.float64)
             
-            # تعبئة القيم الرقمية الصريحة
-            if 'Year' in input_df.columns: input_df.at[0, 'Year'] = year
-            if 'Mileage' in input_df.columns: input_df.at[0, 'Mileage'] = mileage
-            if 'Engine_Size' in input_df.columns: input_df.at[0, 'Engine_Size'] = engine_size
-            if 'Is_New' in input_df.columns: input_df.at[0, 'Is_New'] = 1 if is_new else 0
-            if 'Negotiable' in input_df.columns: input_df.at[0, 'Negotiable'] = 1 if negotiable else 0
+            if 'Year' in input_df.columns: input_df.at[0, 'Year'] = float(year)
+            if 'Mileage' in input_df.columns: input_df.at[0, 'Mileage'] = float(mileage)
+            if 'Engine_Size' in input_df.columns: input_df.at[0, 'Engine_Size'] = float(engine_size)
             
-            # تشفير المدخلات النصية ديناميكياً لتطابق الموديل
-            for col_name, val in [('Brand', selected_brand), ('Model', selected_model), 
-                                  ('Region', region), ('Origin', origin), 
-                                  ('Color', color), ('Trim', trim)]:
+            for col_name, val in [('Brand', selected_brand), ('Model', selected_model)]:
                 specific_col = f"{col_name}_{val}"
                 if specific_col in input_df.columns:
-                    input_df.at[0, specific_col] = 1
+                    input_df.at[0, specific_col] = 1.0
             
             try:
                 predicted_price = rf_model.predict(input_df)[0]
