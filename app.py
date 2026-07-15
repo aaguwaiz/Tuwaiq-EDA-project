@@ -54,6 +54,7 @@ st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to:", ["Predict Car Price", "Market Analytics Dashboard"])
 
 brands = sorted(df['Brand'].dropna().unique())
+trims = sorted(df['Trim'].dropna().unique())
 
 if page == "Predict Car Price":
     st.title("Predict Car Price with Machine Learning")
@@ -66,9 +67,10 @@ if page == "Predict Car Price":
         selected_brand = st.selectbox("Brand", brands)
         available_models = sorted(df[df['Brand'] == selected_brand]['Model'].dropna().unique())
         selected_model = st.selectbox("Model", available_models)
-        year = st.number_input("Year of Manufacture", min_value=1980, max_value=2027, value=2020, step=1)
+        selected_trim = st.selectbox("Trim (Specification Level)", trims)
         
     with col2:
+        year = st.number_input("Year of Manufacture", min_value=1980, max_value=2027, value=2020, step=1)
         mileage = st.number_input("Mileage (in km)", min_value=0, max_value=1000000, value=50000, step=5000)
         engine_size = st.number_input("Engine Size (Liters)", min_value=0.5, max_value=10.0, value=2.0, step=0.1)
         is_new = st.checkbox("Is the car brand new?")
@@ -91,7 +93,7 @@ if page == "Predict Car Price":
             if 'Engine_Size' in input_df.columns: input_df.at[0, 'Engine_Size'] = float(engine_size)
             if 'Is_New' in input_df.columns: input_df.at[0, 'Is_New'] = 1.0 if is_new else 0.0
             
-            for col_name, val in [('Brand', selected_brand), ('Model', selected_model)]:
+            for col_name, val in [('Brand', selected_brand), ('Model', selected_model), ('Trim', selected_trim)]:
                 specific_col = f"{col_name}_{val}"
                 if specific_col in input_df.columns:
                     input_df.at[0, specific_col] = 1.0
@@ -143,7 +145,7 @@ elif page == "Market Analytics Dashboard":
     chart_col1, chart_col2 = st.columns(2)
     
     with chart_col1:
-        st.subheader("Top 10 Most Common Brands in the Market")
+        st.subheader("Top 10 Most Common Brands")
         brand_counts = df['Brand'].value_counts().head(10).reset_index()
         brand_counts.columns = ['Brand', 'Count']
         fig1 = px.bar(brand_counts, x='Brand', y='Count', color='Count',
@@ -156,3 +158,23 @@ elif page == "Market Analytics Dashboard":
         fig2 = px.pie(origin_prices, names='Origin', values='Price', color_discrete_sequence=px.colors.sequential.Blues_r,
                       hole=0.4, labels={'Price': 'Average Price', 'Origin': 'Origin'})
         st.plotly_chart(fig2, use_container_width=True)
+        
+    st.write("---")
+
+    chart_col3, chart_col4 = st.columns(2)
+
+    with chart_col3:
+        st.subheader("Engine Size Distribution")
+        fig3 = px.histogram(df, x='Engine_Size', nbins=20, color_discrete_sequence=['#1E3A8A'],
+                            labels={'Engine_Size': 'Engine Size (Liters)'})
+        st.plotly_chart(fig3, use_container_width=True)
+
+    with chart_col4:
+        st.subheader("Top 10 Most Popular Car Colors")
+        color_counts = df['Color'].value_counts().head(10).reset_index()
+        color_counts.columns = ['Color', 'Count']
+        fig4 = px.bar(color_counts, x='Count', y='Color', orientation='h',
+                      color='Count', color_continuous_scale='Blues',
+                      labels={'Count': 'Car Count', 'Color': 'Color'})
+        fig4.update_layout(yaxis={'categoryorder': 'total ascending'})
+        st.plotly_chart(fig4, use_container_width=True)
