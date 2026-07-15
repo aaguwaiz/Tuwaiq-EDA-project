@@ -46,49 +46,50 @@ try:
     rf_model = load_assets()
     df = load_data()
 except Exception as e:
-    st.error(f"⚠️ Error: {e}")
+    st.error(f"Error loading assets: {e}")
     st.stop()
 
 st.sidebar.image("https://img.icons8.com/clouds/200/car.png", width=150)
-st.sidebar.title("🎮 لوحة التحكم")
-page = st.sidebar.radio("انتقل إلى:", ["🔮 توقع سعر سيارتك", "📊 داشبورد تحليل السوق"])
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to:", ["Predict Car Price", "Market Analytics Dashboard"])
 
 brands = sorted(df['Brand'].dropna().unique())
 
-if page == "🔮 توقع سعر سيارتك":
-    st.title("🔮 توقع سعر السيارة بالذكاء الاصطناعي")
-    st.write("أدخل مواصفات سيارتك الأساسية لمعرفة قيمتها العادلة في السوق السعودي حالياً.")
+if page == "Predict Car Price":
+    st.title("Predict Car Price with Machine Learning")
+    st.write("Enter the vehicle specifications below to estimate its current fair market value in Saudi Arabia.")
     st.write("---")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        selected_brand = st.selectbox("الماركة (Brand)", brands)
+        selected_brand = st.selectbox("Brand", brands)
         available_models = sorted(df[df['Brand'] == selected_brand]['Model'].dropna().unique())
-        selected_model = st.selectbox("الموديل (Model)", available_models)
-        year = st.number_input("سنة الصنع (Year)", min_value=1980, max_value=2027, value=2020, step=1)
+        selected_model = st.selectbox("Model", available_models)
+        year = st.number_input("Year of Manufacture", min_value=1980, max_value=2027, value=2020, step=1)
         
     with col2:
-        mileage = st.number_input("الممشى بالكيلومتر (Mileage)", min_value=0, max_value=1000000, value=50000, step=5000)
-        engine_size = st.number_input("سعة المحرك باللتر (Engine Size)", min_value=0.5, max_value=10.0, value=2.0, step=0.1)
+        mileage = st.number_input("Mileage (in km)", min_value=0, max_value=1000000, value=50000, step=5000)
+        engine_size = st.number_input("Engine Size (Liters)", min_value=0.5, max_value=10.0, value=2.0, step=0.1)
+        is_new = st.checkbox("Is the car brand new?")
 
     st.write("---")
     
-    if st.button("احسب السعر المتوقع 🚀"):
-        with st.spinner("جاري حساب السعر..."):
+    if st.button("Estimate Price"):
+        with st.spinner("Processing specifications and estimating price..."):
             
             try:
                 model_features = rf_model.feature_names_in_
             except AttributeError:
-                st.error("⚠️ الموديل غير متوافق مع جلب الأعمدة تلقائياً.")
+                st.error("Model features not compatible.")
                 st.stop()
                 
-            # إنشاء الـ DataFrame كـ float64 لتلافي خطأ نوع البيانات بالكامل
             input_df = pd.DataFrame(0.0, index=[0], columns=model_features, dtype=np.float64)
             
             if 'Year' in input_df.columns: input_df.at[0, 'Year'] = float(year)
             if 'Mileage' in input_df.columns: input_df.at[0, 'Mileage'] = float(mileage)
             if 'Engine_Size' in input_df.columns: input_df.at[0, 'Engine_Size'] = float(engine_size)
+            if 'Is_New' in input_df.columns: input_df.at[0, 'Is_New'] = 1.0 if is_new else 0.0
             
             for col_name, val in [('Brand', selected_brand), ('Model', selected_model)]:
                 specific_col = f"{col_name}_{val}"
@@ -101,38 +102,38 @@ if page == "🔮 توقع سعر سيارتك":
                 st.balloons()
                 st.markdown(f"""
                     <div style="background-color: #E0F2FE; border-left: 10px solid #0284C7; padding: 25px; border-radius: 8px; text-align: center;">
-                        <h2 style="color: #0369A1; margin: 0;">السعر المتوقع التقريبي لسيارتك هو:</h2>
-                        <h1 style="color: #0369A1; font-size: 50px; margin: 10px 0;">{predicted_price:,.2f} ر.س</h1>
-                        <p style="color: #0284C7; font-size: 14px; margin: 0;">*هذا السعر تقريبي ومبني على تحليل السوق المحلي السعودي الحالي.</p>
+                        <h2 style="color: #0369A1; margin: 0;">Estimated Market Value:</h2>
+                        <h1 style="color: #0369A1; font-size: 50px; margin: 10px 0;">{predicted_price:,.2f} SAR</h1>
+                        <p style="color: #0284C7; font-size: 14px; margin: 0;">*This prediction is based on current Saudi car market data analysis.</p>
                     </div>
                 """, unsafe_allow_html=True)
             except Exception as predict_error:
-                st.error(f"⚠️ Error during prediction: {predict_error}")
+                st.error(f"Error during prediction: {predict_error}")
 
-elif page == "📊 داشبورد تحليل السوق":
-    st.title("📊 داشبورد تحليل سوق السيارات السعودي")
-    st.write("نظرة عامة وإحصائيات تفاعلية مستخرجة مباشرة من قاعدة بيانات السيارات.")
+elif page == "Market Analytics Dashboard":
+    st.title("Saudi Car Market Dashboard")
+    st.write("Visual and interactive market insights extracted from our cleaned local car database.")
     st.write("---")
     
     kpi1, kpi2, kpi3 = st.columns(3)
     with kpi1:
         st.markdown(f"""
             <div class="metric-card">
-                <h4 style="color: #6B7280; margin: 0;">إجمالي السيارات</h4>
-                <h2 style="color: #1E3A8A; margin: 10px 0;">{len(df):,} سيارة</h2>
+                <h4 style="color: #6B7280; margin: 0;">Total Listed Cars</h4>
+                <h2 style="color: #1E3A8A; margin: 10px 0;">{len(df):,}</h2>
             </div>
         """, unsafe_allow_html=True)
     with kpi2:
         st.markdown(f"""
             <div class="metric-card">
-                <h4 style="color: #6B7280; margin: 0;">متوسط الأسعار بالداتا</h4>
-                <h2 style="color: #10B981; margin: 10px 0;">{df['Price'].mean():,.0f} ر.س</h2>
+                <h4 style="color: #6B7280; margin: 0;">Average Car Price</h4>
+                <h2 style="color: #10B981; margin: 10px 0;">{df['Price'].mean():,.0f} SAR</h2>
             </div>
         """, unsafe_allow_html=True)
     with kpi3:
         st.markdown(f"""
             <div class="metric-card">
-                <h4 style="color: #6B7280; margin: 0;">أكثر ماركة طلباً وشهرة</h4>
+                <h4 style="color: #6B7280; margin: 0;">Most Popular Brand</h4>
                 <h2 style="color: #F59E0B; margin: 10px 0;">{df['Brand'].mode()[0]}</h2>
             </div>
         """, unsafe_allow_html=True)
@@ -142,25 +143,16 @@ elif page == "📊 داشبورد تحليل السوق":
     chart_col1, chart_col2 = st.columns(2)
     
     with chart_col1:
-        st.subheader("📈 أكثر 10 ماركات سيارات معروضة في السوق")
+        st.subheader("Top 10 Most Common Brands in the Market")
         brand_counts = df['Brand'].value_counts().head(10).reset_index()
         brand_counts.columns = ['Brand', 'Count']
         fig1 = px.bar(brand_counts, x='Brand', y='Count', color='Count',
-                      color_continuous_scale='Blues', labels={'Count': 'عدد السيارات', 'Brand': 'الماركة'})
+                      color_continuous_scale='Blues', labels={'Count': 'Car Count', 'Brand': 'Brand'})
         st.plotly_chart(fig1, use_container_width=True)
         
     with chart_col2:
-        st.subheader("💰 متوسط الأسعار حسب بلد المنشأ (Origin)")
+        st.subheader("Average Price by Origin")
         origin_prices = df.groupby('Origin')['Price'].mean().reset_index().sort_values(by='Price', ascending=False)
         fig2 = px.pie(origin_prices, names='Origin', values='Price', color_discrete_sequence=px.colors.sequential.Blues_r,
-                      hole=0.4, labels={'Price': 'متوسط السعر', 'Origin': 'المنشأ'})
+                      hole=0.4, labels={'Price': 'Average Price', 'Origin': 'Origin'})
         st.plotly_chart(fig2, use_container_width=True)
-        
-    st.write("---")
-    
-    st.subheader("🚗 العلاقة بين ممشى السيارة (Mileage) وسعرها")
-    sample_size = min(2000, len(df))
-    scatter_data = df.sample(n=sample_size, random_state=42)
-    fig3 = px.scatter(scatter_data, x='Mileage', y='Price', color='Brand',
-                      trendline="ols", trendline_color_override="red")
-    st.plotly_chart(fig3, use_container_width=True)
