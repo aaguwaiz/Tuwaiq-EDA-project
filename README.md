@@ -55,7 +55,3 @@ After uncovering market insights, the predictive modeling phase addresses:
 * **Data Visualization:** Matplotlib, Seaborn
 * **Machine Learning:** Scikit-Learn
 * **Environment:** Google Colab / Jupyter Notebook
-
-├── data/              # Dataset files (UsedCarsSA_Clean_EN.csv)
-├── notebooks/         # Exploratory Data Analysis & Model Building Notebook
-├── README.md          # Project documentation
